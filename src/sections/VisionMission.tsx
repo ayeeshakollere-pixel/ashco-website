@@ -147,7 +147,7 @@ const VisionMission = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-ashco-green/10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-ashco-green/10" />
       </div>
-      
+
       <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-20 relative z-10">
         {/* Header */}
         <div className="text-center mb-16">
@@ -214,10 +214,10 @@ const VisionMission = () => {
               <div className="relative w-48 h-48">
                 {/* Outer Ring */}
                 <div className="absolute inset-0 rounded-full border-4 border-dashed border-ashco-green/30 animate-spin" style={{ animationDuration: '20s' }} />
-                
+
                 {/* Middle Ring */}
                 <div className="absolute inset-4 rounded-full border-2 border-ashco-yellow/50" />
-                
+
                 {/* Center Logo */}
                 <div className="absolute inset-6 rounded-full bg-white shadow-xl flex items-center justify-center overflow-hidden">
                   <img
@@ -226,13 +226,9 @@ const VisionMission = () => {
                     className="w-24 h-24 object-contain"
                   />
                 </div>
-                
+
                 {/* Orbiting Dots */}
                 <div className="absolute inset-0 animate-spin" style={{ animationDuration: '10s' }}>
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-ashco-yellow" />
-                </div>
-                <div className="absolute inset-0 animate-spin" style={{ animationDuration
-                                                                                       <div className="absolute inset-0 animate-spin" style={{ animationDuration: '10s' }}>
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-ashco-yellow" />
                 </div>
                 <div className="absolute inset-0 animate-spin" style={{ animationDuration: '15s', animationDirection: 'reverse' }}>
@@ -292,4 +288,3 @@ const VisionMission = () => {
 };
 
 export default VisionMission;
-
