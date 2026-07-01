@@ -232,5 +232,64 @@ const VisionMission = () => {
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-ashco-yellow" />
                 </div>
                 <div className="absolute inset-0 animate-spin" style={{ animationDuration
+                                                                                       <div className="absolute inset-0 animate-spin" style={{ animationDuration: '10s' }}>
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-ashco-yellow" />
+                </div>
+                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '15s', animationDirection: 'reverse' }}>
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-ashco-green" />
+                </div>
+              </div>
+            </div>
 
+            {/* Mission Card */}
+            <div
+              ref={missionRef}
+              className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:border-ashco-green/30 transition-all duration-300 hover:shadow-2xl"
+            >
+              <div className="w-16 h-16 rounded-xl bg-ashco-yellow/20 flex items-center justify-center mb-6">
+                <Target className="w-8 h-8 text-ashco-yellow" />
+              </div>
+              <h3 className="font-display text-3xl font-bold text-ashco-black mb-4">
+                OUR MISSION
+              </h3>
+              <p className="font-body text-base text-gray-600 leading-relaxed">
+                To deliver superior service with our promise of putting the
+                customer first. Innovation, communication, and effective
+                administration remain at the core of our success, ensuring we
+                remain committed, sustainable, profitable, and focused.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Values */}
+        <div className="mt-20">
+          <h3 className="font-display text-2xl font-bold text-ashco-black text-center mb-10">
+            OUR <span className="text-ashco-green">CORE VALUES</span>
+          </h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {values.map((value, index) => (
+              <div
+                key={index}
+                className="group text-center p-6 rounded-xl bg-ashco-gray hover:bg-ashco-green transition-all duration-300"
+              >
+                <div className="w-12 h-12 rounded-lg bg-ashco-green/10 group-hover:bg-ashco-yellow/20 flex items-center justify-center mx-auto mb-4 transition-colors duration-300">
+                  <value.icon className="w-6 h-6 text-ashco-green group-hover:text-ashco-yellow transition-colors duration-300" />
+                </div>
+                <h4 className="font-display text-xl font-semibold text-ashco-black group-hover:text-white mb-2 transition-colors duration-300">
+                  {value.title}
+                </h4>
+                <p className="font-body text-sm text-gray-600 group-hover:text-white/80 transition-colors duration-300">
+                  {value.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default VisionMission;
 
