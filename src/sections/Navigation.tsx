@@ -52,15 +52,13 @@ const Navigation = () => {
               }}
               className="flex items-center gap-3 group"
             >
-              <div
-                className={`relative w-14 h-14 rounded-xl p-1.5 transition-all duration-300 group-hover:scale-105 ${
-                  isScrolled ? 'bg-white shadow-md' : 'bg-white/95 shadow-lg'
-                }`}
-              >
+              <div className="relative w-16 h-16 transition-all duration-300 group-hover:scale-105">
                 <img
                   src="/logo.png"
                   alt="Ashco Energy Logo"
-                  className="w-full h-full object-contain"
+                  className={`w-full h-full object-contain transition-all duration-300 ${
+                    isScrolled ? '' : 'drop-shadow-[0_2px_8px_rgba(255,255,255,0.5)]'
+                  }`}
                 />
               </div>
               <div className="leading-none">
