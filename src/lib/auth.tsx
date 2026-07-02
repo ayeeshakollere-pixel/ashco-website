@@ -1,17 +1,23 @@
 // ============================================================================
-//  AuthProvider — tracks the currently signed-in user and their profile
-//  (including whether they're an admin). Wrap the app in this once, then any
-//  component can call useAuth() to know who's logged in.
+//  Auth provider — knows who's logged in and what ROLE they have.
+//  Wrap the app in this once, then any component can call useAuth().
+//  Roles: 'customer' | 'admin' | 'owner'
+//    - owner  = top level, can change other people's roles (Team page)
+//    - admin  = manages shop day-to-day, but cannot change roles
+//    - customer = normal user
 // ============================================================================
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase, supabaseReady } from '@/lib/supabase';
+
+export type Role = 'customer' | 'admin' | 'owner';
 
 export interface Profile {
   id: string;
   full_name: string | null;
   phone: string | null;
   company: string | null;
-  is_admin: boolean;
+  role: Role;
+  is_admin: boolean;      // kept for backwards-compatibility with existing code
   order_count: number;
 }
 
@@ -20,7 +26,9 @@ interface AuthState {
   userId: string | null;
   email: string | null;
   profile: Profile | null;
-  isAdmin: boolean;
+  role: Role;                // 'customer' if not logged in
+  isAdmin: boolean;          // true for admin OR owner (can access shop admin)
+  isOwner: boolean;          // true only for owner (can change roles)
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -37,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabaseReady) return;
     const { data } = await supabase
       .from('profiles')
-      .select('id, full_name, phone, company, is_admin, order_count')
+      .select('id, full_name, phone, company, role, is_admin, order_count')
       .eq('id', id)
       .single();
     setProfile((data as Profile) ?? null);
@@ -89,12 +97,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   }
 
+  const role: Role = profile?.role ?? 'customer';
+
   const value: AuthState = {
     ready,
     userId,
     email,
     profile,
-    isAdmin: Boolean(profile?.is_admin),
+    role,
+    isAdmin: role === 'admin' || role === 'owner',
+    isOwner: role === 'owner',
     signOut,
     refresh,
   };
