@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Phone, Truck } from 'lucide-react';
+import { Menu, X, Phone, Truck, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth';
 
 const Navigation = () => {
+  const { userId } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -105,6 +107,19 @@ const Navigation = () => {
 
             {/* CTA Button */}
             <div className="hidden lg:flex items-center gap-3">
+              <Link to={userId ? '/account' : '/login'}>
+                <Button
+                  variant="ghost"
+                  className={`font-body font-semibold text-sm tracking-wide transition-all duration-300 ${
+                    isScrolled
+                      ? 'text-ashco-green hover:bg-ashco-green/10'
+                      : 'text-white hover:bg-white/10'
+                  }`}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  {userId ? 'Account' : 'Login'}
+                </Button>
+              </Link>
               <a href={`tel:${'09055000086'}`}>
                 <Button
                   variant="ghost"
@@ -175,6 +190,14 @@ const Navigation = () => {
               <Truck className="w-5 h-5 mr-2" />
               Order Fuel Now
             </Button>
+          </Link>
+          <Link
+            to={userId ? '/account' : '/login'}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="inline-flex items-center gap-2 text-white font-display text-xl font-semibold hover:text-ashco-yellow transition-colors"
+          >
+            <User className="w-5 h-5" />
+            {userId ? 'My Account' : 'Login / Sign up'}
           </Link>
           <a href="tel:09055000086" className="text-white/80 font-body font-medium">
             or call {`0905 5000 086`}
