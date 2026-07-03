@@ -219,7 +219,7 @@ const VisionMission = () => {
                 <div className="absolute inset-4 rounded-full border-2 border-ashco-yellow/50" />
 
                 {/* Center Logo */}
-                <div className="absolute inset-6 rounded-full bg-white shadow-xl flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-6 rounded-full bg-ashco-green shadow-xl flex items-center justify-center overflow-hidden">
                   <img
                     src="/logo.png"
                     alt="Ashco Energy Logo"
