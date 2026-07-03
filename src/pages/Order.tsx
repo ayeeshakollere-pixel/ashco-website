@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Fuel,
@@ -17,9 +17,6 @@ import {
   Sparkles,
   MessageCircle,
   Home,
-  Mail,
-  AlertTriangle,
-  Loader2,
 } from 'lucide-react';
 import { PRODUCTS, quote, type ProductId } from '@/lib/pricing';
 import { formatNaira, formatLitres, formatNumber } from '@/lib/format';
@@ -32,7 +29,6 @@ import {
   type Order as OrderRecord,
 } from '@/lib/storage';
 import { COMPANY } from '@/lib/company';
-import { supabase, supabaseReady } from '@/lib/supabase';
 import FaqBot from '@/components/FaqBot';
 
 const PRESETS = [200, 500, 1000, 2000, 5000, 10000];
@@ -45,26 +41,6 @@ const ACCENT: Record<string, { ring: string; bg: string; text: string; icon: typ
 
 type Step = 1 | 2 | 3 | 4;
 
-// Paystack public key — set VITE_PAYSTACK_PUBLIC_KEY in Vercel to switch on
-// online payment. While it's absent, ordering works exactly as before.
-const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
-
-function loadPaystack(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const w = window as any;
-    if (w.PaystackPop) return resolve(w.PaystackPop);
-    const s = document.createElement('script');
-    s.src = 'https://js.paystack.co/v1/inline.js';
-    s.onload = () => resolve(w.PaystackPop);
-    s.onerror = () => reject(new Error('Could not load the payment window. Check your connection and try again.'));
-    document.body.appendChild(s);
-  });
-}
-
-function isValidEmail(v: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
-}
-
 const Order = () => {
   const [step, setStep] = useState<Step>(1);
 
@@ -72,14 +48,9 @@ const Order = () => {
   const [productId, setProductId] = useState<ProductId>('diesel');
   const [litres, setLitres] = useState<number>(1000);
 
-  // Live stock from the database, keyed by product id
-  const [stockMap, setStockMap] = useState<Record<string, number>>({});
-  const [stockLoaded, setStockLoaded] = useState(false);
-
   // Step 2
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [company, setCompany] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -88,58 +59,16 @@ const Order = () => {
   const [recognised, setRecognised] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
 
-  // Step 3/4
-  const [submitting, setSubmitting] = useState(false);
-  const [orderError, setOrderError] = useState<string | null>(null);
+  // Step 4
   const [placedOrder, setPlacedOrder] = useState<OrderRecord | null>(null);
-  const [serverRef, setServerRef] = useState<string>('');
-  const [paid, setPaid] = useState(false);
 
   const product = PRODUCTS.find((p) => p.id === productId)!;
   const returning = phone ? isReturning(phone) : false;
-  const payEnabled = Boolean(PAYSTACK_KEY);
 
   const q = useMemo(
     () => quote(productId, litres, returning),
     [productId, litres, returning]
   );
-
-  // Stock helpers for the selected product
-  const available: number | null =
-    stockLoaded && productId in stockMap ? stockMap[productId] : null;
-  const outOfStock = available !== null && available < product.minLitres;
-  const overStock = available !== null && litres > available;
-  const sliderMax =
-    available === null
-      ? product.maxLitres
-      : Math.max(product.minLitres, Math.min(product.maxLitres, available));
-
-  async function loadStock() {
-    if (!supabaseReady) {
-      setStockLoaded(true);
-      return;
-    }
-    const { data } = await supabase.from('products').select('id, stock_litres');
-    const map: Record<string, number> = {};
-    (data ?? []).forEach((r: any) => {
-      map[r.id] = Number(r.stock_litres);
-    });
-    setStockMap(map);
-    setStockLoaded(true);
-  }
-
-  useEffect(() => {
-    loadStock();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // If stock is lower than the current quantity, pull the quantity down
-  useEffect(() => {
-    if (available !== null && !outOfStock && litres > available) {
-      setLitres(Math.max(product.minLitres, Math.min(litres, available)));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [available]);
 
   function checkReturning() {
     const c = findCustomer(phone);
@@ -159,84 +88,11 @@ const Order = () => {
     name.trim().length > 1 &&
     address.trim().length > 3 &&
     city.trim().length > 1 &&
-    deliveryDate.length > 0 &&
-    (!payEnabled || isValidEmail(email));
+    deliveryDate.length > 0;
 
-  // Make sure the fuel is really there right before we take money
-  async function ensureStock() {
-    if (!supabaseReady) return;
-    const { data, error } = await supabase
-      .from('products')
-      .select('stock_litres')
-      .eq('id', productId)
-      .single();
-    if (!error && data && litres > Number(data.stock_litres)) {
-      throw new Error(
-        `Only ${formatNumber(Number(data.stock_litres))} litres available right now. Please lower your quantity.`
-      );
-    }
-  }
-
-  function payWithPaystack(): Promise<string> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const Paystack = await loadPaystack();
-        const handler = Paystack.setup({
-          key: PAYSTACK_KEY,
-          email: email.trim(),
-          amount: Math.round(q.total * 100), // Paystack works in kobo
-          currency: 'NGN',
-          metadata: {
-            custom_fields: [
-              { display_name: 'Product', variable_name: 'product', value: product.name },
-              { display_name: 'Litres', variable_name: 'litres', value: String(litres) },
-              { display_name: 'Phone', variable_name: 'phone', value: normalisePhone(phone) },
-            ],
-          },
-          callback: (resp: any) => resolve(resp.reference as string),
-          onClose: () => reject(new Error('Payment was cancelled — your order was not placed.')),
-        });
-        handler.openIframe();
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
-
-  async function finalizeOrder(paymentRef: string | null) {
-    let ref: string;
-
-    if (supabaseReady) {
-      const { data, error } = await supabase.rpc('place_order', {
-        p_product_id: productId,
-        p_litres: litres,
-        p_name: name.trim(),
-        p_phone: normalisePhone(phone),
-        p_company: company.trim() || null,
-        p_address: address.trim(),
-        p_city: city.trim(),
-        p_delivery_date: deliveryDate,
-        p_notes: notes.trim() || null,
-        p_total: q.total,
-        p_payment_ref: paymentRef,
-      });
-
-      if (error) {
-        if (paymentRef) {
-          throw new Error(
-            `Your payment went through (ref ${paymentRef}) but we couldn't reserve the fuel: ${error.message} ` +
-              `Please contact us with this reference and we'll sort it out right away.`
-          );
-        }
-        throw new Error(error.message);
-      }
-      ref = data as string;
-    } else {
-      ref = generateOrderId();
-    }
-
+  function placeOrder() {
     const order: OrderRecord = {
-      id: ref,
+      id: generateOrderId(),
       phone: normalisePhone(phone),
       name: name.trim(),
       company: company.trim() || undefined,
@@ -252,40 +108,14 @@ const Order = () => {
     };
     saveOrder(order);
     setPlacedOrder(order);
-    setServerRef(ref);
-    setPaid(Boolean(paymentRef));
-    loadStock(); // refresh remaining stock
     setStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  async function submitOrder() {
-    setOrderError(null);
-    if (overStock || outOfStock) {
-      setOrderError('That quantity is more than we currently have in stock. Please lower it.');
-      return;
-    }
-    setSubmitting(true);
-    try {
-      if (payEnabled) {
-        await ensureStock();      // check before charging
-        const ref = await payWithPaystack();
-        await finalizeOrder(ref);
-      } else {
-        await finalizeOrder(null); // no online payment configured yet
-      }
-    } catch (e: any) {
-      setOrderError(e?.message || 'Something went wrong placing your order. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
   }
 
   function whatsappLink(order: OrderRecord) {
     const lines = [
       `*New order — ${COMPANY.name}*`,
       `Order ID: ${order.id}`,
-      paid ? `Payment: PAID (online)` : `Payment: to arrange`,
       `Product: ${order.productName}`,
       `Quantity: ${formatNumber(order.litres)} litres`,
       `Total: ${formatNaira(order.total)}`,
@@ -343,18 +173,12 @@ const Order = () => {
                   const a = ACCENT[p.accent];
                   const Icon = a.icon;
                   const selected = p.id === productId;
-                  const stock = stockLoaded && p.id in stockMap ? stockMap[p.id] : null;
-                  const soldOut = stock !== null && stock < p.minLitres;
                   return (
                     <button
                       key={p.id}
                       onClick={() => {
                         setProductId(p.id);
-                        const cap =
-                          stockLoaded && p.id in stockMap
-                            ? Math.min(p.maxLitres, stockMap[p.id])
-                            : p.maxLitres;
-                        setLitres((l) => Math.min(Math.max(l, p.minLitres), Math.max(p.minLitres, cap)));
+                        setLitres((l) => Math.min(Math.max(l, p.minLitres), p.maxLitres));
                       }}
                       className={`text-left rounded-2xl p-4 bg-white transition-all duration-200 ring-2 ${
                         selected ? `${a.ring} shadow-xl -translate-y-0.5` : 'ring-transparent hover:ring-white/40'
@@ -368,12 +192,7 @@ const Order = () => {
                       <div className={`text-sm font-bold ${a.text}`}>
                         {formatNaira(p.pricePerLitre)}<span className="text-gray-400 font-medium">/litre</span>
                       </div>
-                      {stock !== null && (
-                        <div className={`mt-2 text-xs font-semibold ${soldOut ? 'text-red-600' : 'text-gray-500'}`}>
-                          {soldOut ? 'Out of stock' : `${formatNumber(stock)} L in stock`}
-                        </div>
-                      )}
-                      {selected && !soldOut && (
+                      {selected && (
                         <div className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-ashco-green">
                           <Check className="w-3.5 h-3.5" /> Selected
                         </div>
@@ -392,19 +211,8 @@ const Order = () => {
                   </span>
                 </div>
 
-                {available !== null && !outOfStock && (
-                  <div className="mb-4 text-sm font-semibold text-ashco-green bg-ashco-green/10 rounded-lg px-3 py-2">
-                    {formatNumber(available)} litres available for {product.name}
-                  </div>
-                )}
-                {outOfStock && (
-                  <div className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-red-700 bg-red-50 rounded-lg px-3 py-2">
-                    <AlertTriangle className="w-4 h-4" /> {product.name} is currently out of stock — please pick another product.
-                  </div>
-                )}
-
                 <div className="flex flex-wrap gap-2 mb-5">
-                  {PRESETS.filter((v) => v >= product.minLitres && v <= sliderMax).map((v) => (
+                  {PRESETS.filter((v) => v >= product.minLitres && v <= product.maxLitres).map((v) => (
                     <button
                       key={v}
                       onClick={() => setLitres(v)}
@@ -422,12 +230,11 @@ const Order = () => {
                 <input
                   type="range"
                   min={product.minLitres}
-                  max={sliderMax}
+                  max={product.maxLitres}
                   step={product.step}
-                  value={Math.min(litres, sliderMax)}
-                  disabled={outOfStock}
+                  value={litres}
                   onChange={(e) => setLitres(Number(e.target.value))}
-                  className="w-full accent-ashco-green h-2 mb-4 cursor-pointer disabled:opacity-40"
+                  className="w-full accent-ashco-green h-2 mb-4 cursor-pointer"
                 />
 
                 <div className="flex items-center gap-3">
@@ -435,12 +242,12 @@ const Order = () => {
                     <input
                       type="number"
                       min={product.minLitres}
-                      max={sliderMax}
+                      max={product.maxLitres}
                       value={litres}
                       onChange={(e) => setLitres(Number(e.target.value))}
                       onBlur={() =>
                         setLitres((l) =>
-                          Math.min(Math.max(l || product.minLitres, product.minLitres), sliderMax)
+                          Math.min(Math.max(l || product.minLitres, product.minLitres), product.maxLitres)
                         )
                       }
                       className="w-full text-2xl font-display font-bold text-ashco-black border-2 border-gray-200 rounded-xl px-4 py-3 pr-16 focus:border-ashco-green outline-none"
@@ -450,12 +257,6 @@ const Order = () => {
                     </span>
                   </div>
                 </div>
-
-                {overStock && !outOfStock && (
-                  <p className="mt-3 text-sm font-semibold text-red-600">
-                    Only {formatNumber(available!)} litres available — please lower your quantity.
-                  </p>
-                )}
               </div>
             </section>
 
@@ -470,8 +271,7 @@ const Order = () => {
               />
               <button
                 onClick={() => setStep(2)}
-                disabled={outOfStock || overStock}
-                className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-ashco-yellow text-ashco-black font-display font-bold text-lg px-6 py-4 rounded-2xl hover:bg-ashco-yellow-dark transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-ashco-yellow text-ashco-black font-display font-bold text-lg px-6 py-4 rounded-2xl hover:bg-ashco-yellow-dark transition-colors shadow-lg"
               >
                 Continue to delivery <ArrowRight className="w-5 h-5" />
               </button>
@@ -522,21 +322,10 @@ const Order = () => {
                   <Field label="Full name" icon={User}>
                     <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="input-base" />
                   </Field>
-                  <Field label={payEnabled ? 'Email (for your receipt)' : 'Email (optional)'} icon={Mail}>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@email.com"
-                      inputMode="email"
-                      className="input-base"
-                    />
+                  <Field label="Company (optional)" icon={Building2}>
+                    <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Business name" className="input-base" />
                   </Field>
                 </div>
-
-                <Field label="Company (optional)" icon={Building2}>
-                  <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Business name" className="input-base" />
-                </Field>
 
                 <Field label="Delivery address" icon={MapPin}>
                   <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area, landmark" className="input-base" />
@@ -569,7 +358,7 @@ const Order = () => {
 
                 {touched && !detailsValid && (
                   <p className="text-sm font-medium text-red-600">
-                    Please fill in phone, name{payEnabled ? ', a valid email' : ''}, address, city and a delivery date to continue.
+                    Please fill in phone, name, address, city and a delivery date to continue.
                   </p>
                 )}
               </div>
@@ -650,44 +439,22 @@ const Order = () => {
                 <Detail label="Preferred date" value={deliveryDate} />
                 <Detail label="Contact" value={`${name}${company ? ` — ${company}` : ''}`} />
                 <Detail label="Phone" value={normalisePhone(phone)} />
-                {email && <Detail label="Email" value={email.trim()} />}
                 {notes && <Detail label="Notes" value={notes} />}
               </div>
             </div>
 
-            {orderError && (
-              <div className="mt-4 flex items-start gap-2 rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
-                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{orderError}</span>
-              </div>
-            )}
-
             <div className="flex gap-3 mt-4">
               <button
                 onClick={() => setStep(2)}
-                disabled={submitting}
-                className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-5 py-3 rounded-xl hover:bg-white/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-5 py-3 rounded-xl hover:bg-white/20 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" /> Back
               </button>
               <button
-                onClick={submitOrder}
-                disabled={submitting}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-ashco-yellow text-ashco-black font-display font-bold text-lg px-6 py-3 rounded-xl hover:bg-ashco-yellow-dark transition-colors shadow-lg disabled:opacity-60"
+                onClick={placeOrder}
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-ashco-yellow text-ashco-black font-display font-bold text-lg px-6 py-3 rounded-xl hover:bg-ashco-yellow-dark transition-colors shadow-lg"
               >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" /> Processing…
-                  </>
-                ) : payEnabled ? (
-                  <>
-                    <Check className="w-5 h-5" /> Pay {formatNaira(q.total)} &amp; place order
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-5 h-5" /> Place order
-                  </>
-                )}
+                <Check className="w-5 h-5" /> Place order
               </button>
             </div>
           </div>
@@ -708,13 +475,8 @@ const Order = () => {
             <div className="rounded-2xl bg-white p-6 text-left mb-6">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm text-gray-500">Order ID</span>
-                <span className="font-display font-bold text-ashco-black">{serverRef || placedOrder.id}</span>
+                <span className="font-display font-bold text-ashco-black">{placedOrder.id}</span>
               </div>
-              {paid && (
-                <div className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-ashco-green bg-ashco-green/10 rounded-full px-3 py-1.5">
-                  <Check className="w-3.5 h-3.5" /> Payment received
-                </div>
-              )}
               <div className="flex items-center gap-3 mb-3">
                 <Truck className="w-5 h-5 text-ashco-green" />
                 <span className="text-sm text-ashco-black">
@@ -735,21 +497,16 @@ const Order = () => {
               rel="noreferrer"
               className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] text-white font-display font-bold text-lg px-6 py-4 rounded-2xl hover:brightness-95 transition-all shadow-lg mb-3"
             >
-              <MessageCircle className="w-5 h-5" /> {paid ? 'Share order on WhatsApp' : 'Send order on WhatsApp'}
+              <MessageCircle className="w-5 h-5" /> Send order on WhatsApp
             </a>
             <p className="text-xs text-white/50 mb-6">
-              {paid
-                ? 'Your payment is confirmed. Tap to share the delivery details with our team.'
-                : 'Tap to send your order straight to our team so we can confirm and dispatch.'}
+              Tap to send your order straight to our team so we can confirm and dispatch.
             </p>
 
             <div className="flex gap-3">
               <button
                 onClick={() => {
                   setPlacedOrder(null);
-                  setServerRef('');
-                  setPaid(false);
-                  setOrderError(null);
                   setStep(1);
                   setLitres(1000);
                 }}
