@@ -131,9 +131,17 @@ const Admin = () => {
             </div>
             <div className="font-display font-extrabold tracking-tight">ADMIN DASHBOARD</div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link to="/" className="text-white/70 hover:text-white transition-colors" aria-label="Home"><Home className="w-5 h-5" /></Link>
-            <button onClick={() => { signOut(); navigate('/'); }} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/80 hover:text-white transition-colors">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-ashco-black bg-white px-3 py-2 rounded-xl hover:bg-white/90 transition-colors"
+            >
+              <Home className="w-4 h-4" /> View site
+            </Link>
+            <button
+              onClick={() => { signOut(); navigate('/'); }}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/80 hover:text-white transition-colors"
+            >
               <LogOut className="w-4 h-4" /> Sign out
             </button>
           </div>
@@ -238,8 +246,4 @@ const Admin = () => {
           </div>
         )}
       </main>
-    </div>
-  );
-};
-
-export default Admin;
+    
