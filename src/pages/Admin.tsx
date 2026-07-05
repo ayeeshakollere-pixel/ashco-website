@@ -246,4 +246,9 @@ const Admin = () => {
           </div>
         )}
       </main>
+      </div>
+  );
+};
+
+export default Admin;
     
