@@ -1,282 +1,252 @@
-import { useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Eye, Target, Zap, Globe, Handshake, Lightbulb } from 'lucide-react';
+import { ShoppingCart, MapPin, Phone, CheckCircle, ArrowRight } from 'lucide-react';
 
-gsap.registerPlugin(ScrollTrigger);
+const OrderSequence = () => {
+  const formRef = useRef<HTMLDivElement>(null);
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    productType: '',
+    quantity: '',
+    deliveryAddress: '',
+    contactName: '',
+    phoneNumber: '',
+  });
 
-const VisionMission = () => {
-  const sectionRef = useRef<HTMLElement>(null);
-  const centerRef = useRef<HTMLDivElement>(null);
-  const visionRef = useRef<HTMLDivElement>(null);
-  const missionRef = useRef<HTMLDivElement>(null);
-  const line1Ref = useRef<SVGPathElement>(null);
-  const line2Ref = useRef<SVGPathElement>(null);
-
+  // Simple entrance animation for the form
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Center graphic animation
-      gsap.fromTo(
-        centerRef.current,
-        { scale: 0, rotation: 180 },
-        {
-          scale: 1,
-          rotation: 0,
-          duration: 1.2,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 70%',
-            toggleActions: 'play none none reverse',
-          },
-        }
-      );
+    gsap.fromTo(
+      formRef.current,
+      { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
+    );
+  }, [step]);
 
-      // Vision card animation
-      gsap.fromTo(
-        visionRef.current,
-        { opacity: 0, x: -100 },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 0.8,
-          delay: 0.3,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 70%',
-            toggleActions: 'play none none reverse',
-          },
-        }
-      );
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-      // Mission card animation
-      gsap.fromTo(
-        missionRef.current,
-        { opacity: 0, x: 100 },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 0.8,
-          delay: 0.5,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 70%',
-            toggleActions: 'play none none reverse',
-          },
-        }
-      );
+  const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
+  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
-      // SVG line animations
-      if (line1Ref.current && line2Ref.current) {
-        const lineLength1 = line1Ref.current.getTotalLength();
-        const lineLength2 = line2Ref.current.getTotalLength();
-
-        gsap.set(line1Ref.current, {
-          strokeDasharray: lineLength1,
-          strokeDashoffset: lineLength1,
-        });
-
-        gsap.set(line2Ref.current, {
-          strokeDasharray: lineLength2,
-          strokeDashoffset: lineLength2,
-        });
-
-        gsap.to(line1Ref.current, {
-          strokeDashoffset: 0,
-          duration: 1,
-          delay: 0.8,
-          ease: 'power2.inOut',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 70%',
-            toggleActions: 'play none none reverse',
-          },
-        });
-
-        gsap.to(line2Ref.current, {
-          strokeDashoffset: 0,
-          duration: 1,
-          delay: 0.8,
-          ease: 'power2.inOut',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 70%',
-            toggleActions: 'play none none reverse',
-          },
-        });
-      }
-
-      // Floating animation for cards
-      gsap.to([visionRef.current, missionRef.current], {
-        y: -10,
-        duration: 4,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
-
-  const values = [
-    { icon: Zap, title: 'Innovation', description: 'Constantly improving our services' },
-    { icon: Globe, title: 'Coverage', description: 'Nationwide reach across Nigeria' },
-    { icon: Handshake, title: 'Partnership', description: 'Building lasting relationships' },
-    { icon: Lightbulb, title: 'Excellence', description: 'Quality in every delivery' },
-  ];
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Add your actual form submission logic here (e.g., API call)
+    setStep(4); // Move to success step
+  };
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative py-24 lg:py-32 bg-white overflow-hidden"
-    >
+    <section className="relative py-24 lg:py-32 bg-ashco-gray min-h-screen flex items-center justify-center">
       {/* Background Decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-ashco-green/10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-ashco-green/10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-ashco-green/10" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-ashco-green/5 blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-ashco-yellow/5 blur-3xl translate-y-1/3 -translate-x-1/3" />
       </div>
 
-      <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-20 relative z-10">
+      <div className="w-full max-w-3xl px-4 sm:px-6 relative z-10">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-8 h-0.5 bg-ashco-yellow" />
             <span className="font-body text-sm font-semibold text-ashco-green uppercase tracking-wider">
-              Our Direction
+              Request Delivery
             </span>
             <div className="w-8 h-0.5 bg-ashco-yellow" />
           </div>
-          <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-ashco-black leading-[1.05]">
-            VISION & <span className="text-ashco-green">MISSION</span>
+          <h2 className="font-display text-4xl sm:text-5xl font-bold text-ashco-black">
+            PLACE YOUR <span className="text-ashco-green">ORDER</span>
           </h2>
         </div>
 
-        {/* Vision & Mission Cards */}
-        <div className="relative max-w-6xl mx-auto">
-          {/* SVG Connection Lines */}
-          <svg
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none hidden lg:block"
-            viewBox="0 0 1200 400"
-            fill="none"
-          >
-            <path
-              ref={line1Ref}
-              d="M400 200 Q500 200 550 200"
-              stroke="#e7a900"
-              strokeWidth="2"
-              strokeDasharray="8 8"
-              fill="none"
-            />
-            <path
-              ref={line2Ref}
-              d="M650 200 Q700 200 800 200"
-              stroke="#e7a900"
-              strokeWidth="2"
-              strokeDasharray="8 8"
-              fill="none"
-            />
-          </svg>
-
-          <div className="grid lg:grid-cols-3 gap-8 items-center">
-            {/* Vision Card */}
-            <div
-              ref={visionRef}
-              className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:border-ashco-green/30 transition-all duration-300 hover:shadow-2xl"
-            >
-              <div className="w-16 h-16 rounded-xl bg-ashco-green/10 flex items-center justify-center mb-6">
-                <Eye className="w-8 h-8 text-ashco-green" />
-              </div>
-              <h3 className="font-display text-3xl font-bold text-ashco-black mb-4">
-                OUR VISION
-              </h3>
-              <p className="font-body text-base text-gray-600 leading-relaxed">
-                To be recognized as a leading African brand in petroleum trading
-                in Nigeria. We aim to expand our national footprint with proven
-                networks, outlets, and distributors of our products, setting the
-                standard for excellence in the energy sector.
-              </p>
+        {/* Form Container */}
+        <div ref={formRef} className="bg-white rounded-2xl shadow-xl p-8 md:p-12 border border-gray-100">
+          
+          {/* Progress Indicator */}
+          {step < 4 && (
+            <div className="flex items-center justify-between mb-12 relative">
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-100 -z-10" />
+              <div 
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-ashco-green transition-all duration-500 -z-10"
+                style={{ width: `${((step - 1) / 2) * 100}%` }}
+              />
+              
+              {[
+                { num: 1, icon: ShoppingCart, label: 'Product' },
+                { num: 2, icon: MapPin, label: 'Delivery' },
+                { num: 3, icon: CheckCircle, label: 'Review' },
+              ].map((item) => (
+                <div key={item.num} className="flex flex-col items-center bg-white px-2">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                    step >= item.num ? 'bg-ashco-green text-white shadow-lg shadow-ashco-green/30' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    <item.icon className="w-5 h-5" />
+                  </div>
+                  <span className={`text-sm mt-2 font-medium ${step >= item.num ? 'text-ashco-black' : 'text-gray-400'}`}>
+                    {item.label}
+                  </span>
+                </div>
+              ))}
             </div>
+          )}
 
-            {/* Center Graphic */}
-            <div ref={centerRef} className="flex justify-center py-8 lg:py-0">
-              <div className="relative w-48 h-48">
-                {/* Outer Ring — spins slowly */}
-                <div className="absolute inset-0 rounded-full border-4 border-dashed border-ashco-green/30 animate-spin" style={{ animationDuration: '20s' }} />
-
-                {/* Middle Ring — spins the other way */}
-                <div className="absolute inset-4 rounded-full border-2 border-ashco-yellow/50 animate-spin" style={{ animationDuration: '30s', animationDirection: 'reverse' }} />
-
-                {/* Center Logo — stays still */}
-                <div className="absolute inset-6 rounded-full bg-ashco-green shadow-xl flex items-center justify-center overflow-hidden">
-                  <img
-                    src="/logo.png"
-                    alt="Ashco Energy Logo"
-                    className="w-24 h-24 object-contain"
+          {/* Form Steps */}
+          <form onSubmit={handleSubmit}>
+            
+            {/* Step 1: Product Selection */}
+            {step === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <label className="block font-body text-sm font-semibold text-ashco-black mb-2">Product Type</label>
+                  <select
+                    name="productType"
+                    value={formData.productType}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-ashco-green focus:ring-2 focus:ring-ashco-green/20 outline-none transition-all"
+                  >
+                    <option value="">Select a product...</option>
+                    <option value="PMS">Premium Motor Spirit (PMS)</option>
+                    <option value="AGO">Automotive Gas Oil (AGO / Diesel)</option>
+                    <option value="DPK">Dual Purpose Kerosene (DPK)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-body text-sm font-semibold text-ashco-black mb-2">Quantity (Litres)</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    value={formData.quantity}
+                    onChange={handleInputChange}
+                    placeholder="Enter volume in litres"
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-ashco-green focus:ring-2 focus:ring-ashco-green/20 outline-none transition-all"
                   />
                 </div>
+              </div>
+            )}
 
-                {/* Orbiting Dots */}
-                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '10s' }}>
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-ashco-yellow" />
+            {/* Step 2: Delivery & Contact Details */}
+            {step === 2 && (
+              <div className="space-y-6">
+                <div>
+                  <label className="block font-body text-sm font-semibold text-ashco-black mb-2">Contact Name</label>
+                  <input
+                    type="text"
+                    name="contactName"
+                    value={formData.contactName}
+                    onChange={handleInputChange}
+                    placeholder="Full Name or Company Name"
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-ashco-green focus:ring-2 focus:ring-ashco-green/20 outline-none transition-all"
+                  />
                 </div>
-                <div className="absolute inset-0 animate-spin" style={{ animationDuration: '15s', animationDirection: 'reverse' }}>
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-ashco-green" />
+                <div>
+                  <label className="block font-body text-sm font-semibold text-ashco-black mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    placeholder="+234 XXX XXXX"
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-ashco-green focus:ring-2 focus:ring-ashco-green/20 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block font-body text-sm font-semibold text-ashco-black mb-2">Delivery Address</label>
+                  <input
+                    type="text"
+                    name="deliveryAddress"
+                    value={formData.deliveryAddress}
+                    onChange={handleInputChange}
+                    placeholder="Full street address and state"
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-ashco-green focus:ring-2 focus:ring-ashco-green/20 outline-none transition-all"
+                  />
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Mission Card */}
-            <div
-              ref={missionRef}
-              className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:border-ashco-green/30 transition-all duration-300 hover:shadow-2xl"
-            >
-              <div className="w-16 h-16 rounded-xl bg-ashco-yellow/20 flex items-center justify-center mb-6">
-                <Target className="w-8 h-8 text-ashco-yellow" />
-              </div>
-              <h3 className="font-display text-3xl font-bold text-ashco-black mb-4">
-                OUR MISSION
-              </h3>
-              <p className="font-body text-base text-gray-600 leading-relaxed">
-                To deliver superior service with our promise of putting the
-                customer first. Innovation, communication, and effective
-                administration remain at the core of our success, ensuring we
-                remain committed, sustainable, profitable, and focused.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Values */}
-        <div className="mt-20">
-          <h3 className="font-display text-2xl font-bold text-ashco-black text-center mb-10">
-            OUR <span className="text-ashco-green">CORE VALUES</span>
-          </h3>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {values.map((value, index) => (
-              <div
-                key={index}
-                className="group text-center p-6 rounded-xl bg-ashco-gray hover:bg-ashco-green transition-all duration-300"
-              >
-                <div className="w-12 h-12 rounded-lg bg-ashco-green/10 group-hover:bg-ashco-yellow/20 flex items-center justify-center mx-auto mb-4 transition-colors duration-300">
-                  <value.icon className="w-6 h-6 text-ashco-green group-hover:text-ashco-yellow transition-colors duration-300" />
+            {/* Step 3: Review */}
+            {step === 3 && (
+              <div className="bg-ashco-green/5 p-6 rounded-xl border border-ashco-green/10 space-y-4">
+                <h3 className="font-display text-xl font-bold text-ashco-black mb-4">Order Summary</h3>
+                <div className="flex justify-between border-b border-gray-200 pb-2">
+                  <span className="text-gray-500">Product:</span>
+                  <span className="font-semibold text-ashco-black">{formData.productType || 'Not specified'}</span>
                 </div>
-                <h4 className="font-display text-xl font-semibold text-ashco-black group-hover:text-white mb-2 transition-colors duration-300">
-                  {value.title}
-                </h4>
-                <p className="font-body text-sm text-gray-600 group-hover:text-white/80 transition-colors duration-300">
-                  {value.description}
+                <div className="flex justify-between border-b border-gray-200 pb-2">
+                  <span className="text-gray-500">Quantity:</span>
+                  <span className="font-semibold text-ashco-black">{formData.quantity ? `${formData.quantity} Litres` : 'Not specified'}</span>
+                </div>
+                <div className="flex justify-between border-b border-gray-200 pb-2">
+                  <span className="text-gray-500">Contact:</span>
+                  <span className="font-semibold text-ashco-black">{formData.contactName} ({formData.phoneNumber})</span>
+                </div>
+                <div className="flex justify-between pb-2">
+                  <span className="text-gray-500">Destination:</span>
+                  <span className="font-semibold text-ashco-black text-right max-w-[60%]">{formData.deliveryAddress}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Success State */}
+            {step === 4 && (
+              <div className="text-center py-8">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-10 h-10 text-green-500" />
+                </div>
+                <h3 className="font-display text-3xl font-bold text-ashco-black mb-4">Order Received!</h3>
+                <p className="text-gray-600 mb-8">
+                  Thank you for choosing Ashco Energy. Our dispatch team will contact you shortly to confirm your delivery schedule.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setFormData({ productType: '', quantity: '', deliveryAddress: '', contactName: '', phoneNumber: '' }); }}
+                  className="px-8 py-3 bg-ashco-green text-white font-semibold rounded-lg hover:bg-ashco-black transition-colors"
+                >
+                  Place Another Order
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* Navigation Buttons */}
+            {step < 4 && (
+              <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className={`px-6 py-2.5 font-semibold rounded-lg transition-colors ${
+                    step === 1 ? 'opacity-0 pointer-events-none' : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  Back
+                </button>
+                
+                {step < 3 ? (
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    className="flex items-center gap-2 bg-ashco-green text-white px-8 py-2.5 rounded-lg font-semibold hover:bg-ashco-black transition-colors"
+                  >
+                    Next Step <ArrowRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="flex items-center gap-2 bg-ashco-yellow text-ashco-black px-8 py-2.5 rounded-lg font-bold hover:bg-ashco-black hover:text-white transition-colors"
+                  >
+                    Confirm Order
+                  </button>
+                )}
+              </div>
+            )}
+          </form>
         </div>
       </div>
     </section>
   );
 };
 
-export default VisionMission;
+export default OrderSequence;
