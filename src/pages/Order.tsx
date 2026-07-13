@@ -35,7 +35,7 @@ const OrderSequence = () => {
     
     // REPLACE THIS WITH THE ACTUAL ASHCO ENERGY WHATSAPP NUMBER
     // Ensure it includes the country code (e.g., 234) but NO '+' symbol.
-    const COMPANY_WHATSAPP_NUMBER = "2348000000000"; 
+    const COMPANY_WHATSAPP_NUMBER = "2349055000086"; 
 
     // Construct the WhatsApp message
     const message = `Hello Ashco Energy, I would like to place an order:
@@ -226,7 +226,7 @@ Please provide the payment details.`;
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      const COMPANY_WHATSAPP_NUMBER = "2347088881014"; 
+                      const COMPANY_WHATSAPP_NUMBER = "2349055000086"; 
                       const message = `Hello Ashco Energy, I would like to place an order:\n\n*Product:* ${formData.productType}\n*Quantity:* ${formData.quantity} Litres\n*Delivery Address:* ${formData.deliveryAddress}\n*Contact Name:* ${formData.contactName}\n*Phone Number:* ${formData.phoneNumber}\n\nPlease provide the payment details.`;
                       window.open(`https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
                     }}
