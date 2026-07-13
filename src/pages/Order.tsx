@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
-import { ShoppingCart, MapPin, Phone, CheckCircle, ArrowRight } from 'lucide-react';
+// Removed the unused 'Phone' import to fix the Vercel build error
+import { ShoppingCart, MapPin, CheckCircle, ArrowRight } from 'lucide-react';
 
 const OrderSequence = () => {
   const formRef = useRef<HTMLDivElement>(null);
@@ -13,7 +14,6 @@ const OrderSequence = () => {
     phoneNumber: '',
   });
 
-  // Simple entrance animation for the form
   useEffect(() => {
     gsap.fromTo(
       formRef.current,
@@ -32,8 +32,28 @@ const OrderSequence = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Add your actual form submission logic here (e.g., API call)
-    setStep(4); // Move to success step
+    
+    // REPLACE THIS WITH THE ACTUAL ASHCO ENERGY WHATSAPP NUMBER
+    // Ensure it includes the country code (e.g., 234) but NO '+' symbol.
+    const COMPANY_WHATSAPP_NUMBER = "2348000000000"; 
+
+    // Construct the WhatsApp message
+    const message = `Hello Ashco Energy, I would like to place an order:
+
+*Product:* ${formData.productType}
+*Quantity:* ${formData.quantity} Litres
+*Delivery Address:* ${formData.deliveryAddress}
+*Contact Name:* ${formData.contactName}
+*Phone Number:* ${formData.phoneNumber}
+
+Please provide the payment details.`;
+
+    // Encode the message for the URL and open WhatsApp
+    const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+
+    // Move to success step locally
+    setStep(4); 
   };
 
   return (
@@ -191,23 +211,37 @@ const OrderSequence = () => {
               </div>
             )}
 
-            {/* Step 4: Success State */}
+            {/* Step 4: Success State / WhatsApp Redirect Info */}
             {step === 4 && (
               <div className="text-center py-8">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <CheckCircle className="w-10 h-10 text-green-500" />
                 </div>
-                <h3 className="font-display text-3xl font-bold text-ashco-black mb-4">Order Received!</h3>
+                <h3 className="font-display text-3xl font-bold text-ashco-black mb-4">Redirecting to WhatsApp...</h3>
                 <p className="text-gray-600 mb-8">
-                  Thank you for choosing Ashco Energy. Our dispatch team will contact you shortly to confirm your delivery schedule.
+                  Your order details have been prepared. You should be redirected to WhatsApp automatically to receive payment details.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => { setStep(1); setFormData({ productType: '', quantity: '', deliveryAddress: '', contactName: '', phoneNumber: '' }); }}
-                  className="px-8 py-3 bg-ashco-green text-white font-semibold rounded-lg hover:bg-ashco-black transition-colors"
-                >
-                  Place Another Order
-                </button>
+                <div className="flex flex-col gap-4 items-center">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const COMPANY_WHATSAPP_NUMBER = "2347088881014"; 
+                      const message = `Hello Ashco Energy, I would like to place an order:\n\n*Product:* ${formData.productType}\n*Quantity:* ${formData.quantity} Litres\n*Delivery Address:* ${formData.deliveryAddress}\n*Contact Name:* ${formData.contactName}\n*Phone Number:* ${formData.phoneNumber}\n\nPlease provide the payment details.`;
+                      window.open(`https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+                    }}
+                    className="text-ashco-green font-semibold hover:underline"
+                  >
+                    Didn't redirect? Click here to open WhatsApp
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setStep(1); setFormData({ productType: '', quantity: '', deliveryAddress: '', contactName: '', phoneNumber: '' }); }}
+                    className="px-8 py-3 bg-ashco-gray text-ashco-black font-semibold rounded-lg hover:bg-gray-200 transition-colors mt-4"
+                  >
+                    Start a New Order
+                  </button>
+                </div>
               </div>
             )}
 
@@ -237,7 +271,7 @@ const OrderSequence = () => {
                     type="submit"
                     className="flex items-center gap-2 bg-ashco-yellow text-ashco-black px-8 py-2.5 rounded-lg font-bold hover:bg-ashco-black hover:text-white transition-colors"
                   >
-                    Confirm Order
+                    Confirm & Open WhatsApp
                   </button>
                 )}
               </div>
